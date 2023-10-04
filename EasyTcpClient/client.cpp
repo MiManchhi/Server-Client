@@ -4,11 +4,41 @@
 #include<iostream>
 #pragma comment (lib,"ws2_32.lib")
 
-struct DataPackage
+enum CMD
 {
-	int age;
-	char name[32];
+	CMD_LOGIN,
+	CMD_LOGOUT,
+	CMD_ERROR
 };
+
+struct DataHeader
+{
+	short datalength;
+	short cmd;
+};
+
+struct Login
+{
+	char userName[32];
+	char PassWord[32];
+};
+
+struct LoginResult
+{
+	int result;
+};
+
+struct Logout
+{
+	char userName[32];
+};
+
+struct LogoutResult
+{
+	int result;
+};
+
+
 int main()
 {
 	//启动Socket
@@ -44,19 +74,43 @@ int main()
 		char msgBuf[256] = {};
 		std::cout << "请输入请求：" << std::endl;
 		std::cin >> msgBuf;
+		//处理请求
 		if (0 == strcmp(msgBuf, "exit"))
 		{
 			std::cout << "客户端退出！" << std::endl;
 			break;
 		}
-		send(_cSock, msgBuf, strlen(msgBuf) + 1, 0);
-		//接收服务器信息 recv
-		char recvBuf[256] = {};
-		int nlen = recv(_cSock, recvBuf, 256, 0);
-		if (nlen > 0)
+		if (0 == strcmp(msgBuf, "login"))
 		{
-			DataPackage* dp = (DataPackage*)recvBuf;
-			std::cout << "接收到信息：" << "name :" << dp->name << "\t" << "age :" << dp->age << std::endl;
+			Login login = {"张三","abcdef"};
+			DataHeader header = {sizeof(Login),CMD_LOGIN};
+			//发送请求
+			send(_cSock, (const char*)&header, sizeof(DataHeader), 0);
+			send(_cSock, (const char*)&login, sizeof(Login), 0);
+			//接收信息
+			LoginResult loginret = {};
+			DataHeader headerret = {};
+			recv(_cSock, (char*)&headerret, sizeof(DataHeader), 0);
+			recv(_cSock, (char*)&loginret, sizeof(LoginResult), 0);
+			std::cout << "LoginResult ：" << loginret.result << std::endl;
+		}
+		if (0 == strcmp(msgBuf, "logout"))
+		{
+			Logout logout = { "张三" };
+			DataHeader header = { sizeof(Logout),CMD_LOGOUT };
+			//发送请求
+			send(_cSock, (const char*)&header, sizeof(DataHeader), 0);
+			send(_cSock, (const char*)&logout, sizeof(Logout), 0);
+			//接收信息
+			LogoutResult logoutret = {};
+			DataHeader headerret = {};
+			recv(_cSock, (char*)&headerret, sizeof(DataHeader), 0);
+			recv(_cSock, (char*)&logoutret, sizeof(LogoutResult), 0);
+			std::cout << "LogoutResult : " << logoutret.result << std::endl;
+		}
+		if(0 != strcmp(msgBuf, "logout") && 0 != strcmp(msgBuf, "login"))
+		{
+			std::cout << "不支持的命令，请重新输入！" << std::endl;
 		}
 	}
 	//关闭套接字

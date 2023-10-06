@@ -7,7 +7,9 @@
 enum CMD
 {
 	CMD_LOGIN,
+	CMD_LOGIN_RESULT,
 	CMD_LOGOUT,
+	CMD_LOGOUT_RESULT,
 	CMD_ERROR
 };
 
@@ -17,27 +19,48 @@ struct DataHeader
 	short cmd;
 };
 
-struct Login
+struct Login : public DataHeader
 {
+	Login()
+	{
+		this->cmd = CMD_LOGIN;
+		this->datalength = sizeof(Login);
+	}
 	char userName[32];
 	char PassWord[32];
 };
 
-struct LoginResult
+struct LoginResult : public DataHeader
 {
+	LoginResult()
+	{
+		this->cmd = CMD_LOGIN_RESULT;
+		this->datalength = sizeof(LoginResult);
+		this->result = 0;
+	}
 	int result;
 };
 
-struct Logout
+struct Logout : public DataHeader
 {
+	Logout()
+	{
+		this->cmd = CMD_LOGOUT;
+		this->datalength = sizeof(Logout);
+	}
 	char userName[32];
 };
 
-struct LogoutResult
+struct LogoutResult : public DataHeader
 {
+	LogoutResult()
+	{
+		this->cmd = CMD_LOGOUT_RESULT;
+		this->datalength = sizeof(LogoutResult);
+		this->result = 0;
+	}
 	int result;
 };
-
 
 int main()
 {
@@ -59,7 +82,7 @@ int main()
 	sockaddr_in _sin = {};
 	_sin.sin_family = AF_INET;
 	_sin.sin_port = htons(4567);
-	_sin.sin_addr.S_un.S_addr = inet_addr("10.180.46.33");
+	_sin.sin_addr.S_un.S_addr = inet_addr("10.180.48.229");
 	if (connect(_cSock, (sockaddr*)&_sin, sizeof(sockaddr_in)) == SOCKET_ERROR)
 	{
 		std::cout << "服务器连接失败！" << std::endl;
@@ -82,31 +105,27 @@ int main()
 		}
 		if (0 == strcmp(msgBuf, "login"))
 		{
-			Login login = {"张三","abcdef"};
-			DataHeader header = {sizeof(Login),CMD_LOGIN};
+			Login login;
+			strcpy((login.userName), "张三");
+			strcpy((login.PassWord), "123456");
 			//发送请求
-			send(_cSock, (const char*)&header, sizeof(DataHeader), 0);
 			send(_cSock, (const char*)&login, sizeof(Login), 0);
 			//接收信息
-			LoginResult loginret = {};
-			DataHeader headerret = {};
-			recv(_cSock, (char*)&headerret, sizeof(DataHeader), 0);
+			LoginResult loginret;
 			recv(_cSock, (char*)&loginret, sizeof(LoginResult), 0);
-			std::cout << "LoginResult ：" << loginret.result << std::endl;
+			std::cout << "username = " << login.userName << "\t" << "userpassword = " << login.PassWord << "\t"
+				<< "LoginResult ：" << loginret.result << std::endl;
 		}
 		if (0 == strcmp(msgBuf, "logout"))
 		{
-			Logout logout = { "张三" };
-			DataHeader header = { sizeof(Logout),CMD_LOGOUT };
+			Logout logout;
+			strcpy((logout.userName), "张三");
 			//发送请求
-			send(_cSock, (const char*)&header, sizeof(DataHeader), 0);
 			send(_cSock, (const char*)&logout, sizeof(Logout), 0);
 			//接收信息
-			LogoutResult logoutret = {};
-			DataHeader headerret = {};
-			recv(_cSock, (char*)&headerret, sizeof(DataHeader), 0);
+			LogoutResult logoutret;
 			recv(_cSock, (char*)&logoutret, sizeof(LogoutResult), 0);
-			std::cout << "LogoutResult : " << logoutret.result << std::endl;
+			std::cout << "username = " << logout.userName << "\t" << "LogoutResult : " << logoutret.result << std::endl;
 		}
 		if(0 != strcmp(msgBuf, "logout") && 0 != strcmp(msgBuf, "login"))
 		{

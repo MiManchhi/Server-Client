@@ -9,34 +9,58 @@
 enum CMD
 {
 	CMD_LOGIN,
+	CMD_LOGIN_RESULT,
 	CMD_LOGOUT,
+	CMD_LOGOUT_RESULT,
 	CMD_ERROR
 };
 
-struct DataHeader
+struct DataHeader 
 {
 	short datalength;
 	short cmd;
 };
 
-struct Login
+struct Login : public DataHeader
 {
+	Login()
+	{
+		this->cmd = CMD_LOGIN;
+		this->datalength = sizeof(Login);
+	}
 	char userName[32];
 	char PassWord[32];
 };
 
-struct LoginResult
+struct LoginResult : public DataHeader
 {
+	LoginResult()
+	{
+		this->cmd = CMD_LOGIN_RESULT;
+		this->datalength = sizeof(LoginResult);
+		this->result = 0;
+	}
 	int result;
 };
 
-struct Logout
+struct Logout : public DataHeader
 {
+	Logout()
+	{
+		this->cmd = CMD_LOGOUT;
+		this->datalength = sizeof(Logout);
+	}
 	char userName[32];
 };
 
-struct LogoutResult
+struct LogoutResult : public DataHeader
 {
+	LogoutResult()
+	{
+		this->cmd = CMD_LOGOUT_RESULT;
+		this->datalength = sizeof(LogoutResult);
+		this->result = 0;
+	}
 	int result;
 };
 
@@ -88,30 +112,31 @@ int main()
 		int nlen = recv(_cSock, (char*) & header, sizeof(DataHeader), 0);
 		if (nlen <= 0)
 		{
-			std::cout << "客户端已退出！";
+			std::cout << "客户端已退出！" << std::endl;
 			break;
 		}
-		std::cout << "收到命令：" << header.cmd << "\t" << "数据长度:" << header.datalength << std::endl;
 		//处理请求
 		switch (header.cmd)
 		{
 		    case CMD_LOGIN:
 		      {
-				Login login = {};
-				recv(_cSock, (char*)&login, sizeof(Login), 0);
+				Login login;
+				recv(_cSock, (char*)&login + sizeof(DataHeader), sizeof(Login) - sizeof(DataHeader), 0);
+				std::cout << "接收到信息：username = " << login.userName << "\t" << "userpassword = " << login.userName << "\t"
+					<< "datalength = " << login.datalength << std::endl;
 				//忽略判断用户名和密码错误的过程
-				LoginResult ret = {0};
-				send(_cSock, (const char*)&header, sizeof(DataHeader), 0);
+				LoginResult ret;
 				send(_cSock, (const char*)&ret, sizeof(LoginResult), 0);
 		      }
 		    break;
 			case CMD_LOGOUT:
 			{
 				Logout logout = {};
-				recv(_cSock, (char*)&logout, sizeof(Logout), 0);
+				recv(_cSock, (char*)&logout + sizeof(DataHeader), sizeof(Logout) - sizeof(DataHeader), 0);
+				std::cout << "接收到信息：username = " << logout.userName << "\t"
+					<< "datalength = " << logout.datalength << std::endl;
 				//忽略判断用户名和密码错误的过程
-				LogoutResult ret = { 0 };
-				send(_cSock, (const char*)&header, sizeof(DataHeader), 0);
+				LogoutResult ret;
 				send(_cSock, (const char*)&ret, sizeof(LogoutResult), 0);
 			}
 			break;

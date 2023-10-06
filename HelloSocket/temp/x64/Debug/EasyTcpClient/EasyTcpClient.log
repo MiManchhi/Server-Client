@@ -1,2 +1,5 @@
 ﻿  client.cpp
+D:\VisualStudio_program\百万并发服务器\EasyTcpClient\client.cpp(109,4): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\VisualStudio_program\百万并发服务器\EasyTcpClient\client.cpp(110,4): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\VisualStudio_program\百万并发服务器\EasyTcpClient\client.cpp(122,4): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   EasyTcpClient.vcxproj -> D:\VisualStudio_program\百万并发服务器\HelloSocket\bin\x64\Debug\EasyTcpClient.exe

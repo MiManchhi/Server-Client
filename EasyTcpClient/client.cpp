@@ -82,7 +82,7 @@ int main()
 	sockaddr_in _sin = {};
 	_sin.sin_family = AF_INET;
 	_sin.sin_port = htons(4567);
-	_sin.sin_addr.S_un.S_addr = inet_addr("10.180.48.229");
+	_sin.sin_addr.S_un.S_addr = inet_addr("10.180.50.74");
 	if (connect(_cSock, (sockaddr*)&_sin, sizeof(sockaddr_in)) == SOCKET_ERROR)
 	{
 		std::cout << "服务器连接失败！" << std::endl;

@@ -1,4 +1,4 @@
 ﻿  server.cpp
-D:\VisualStudio_program\百万并发服务器\EasyServer\server.cpp(162,26): warning C4244: “参数”: 从“SOCKET”转换到“int”，可能丢失数据
-D:\VisualStudio_program\百万并发服务器\EasyServer\server.cpp(111): warning C4715: “processor”: 不是所有的控件路径都返回值
+D:\VisualStudio_program\百万并发服务器\EasyServer\server.cpp(177,26): warning C4244: “参数”: 从“SOCKET”转换到“int”，可能丢失数据
+D:\VisualStudio_program\百万并发服务器\EasyServer\server.cpp(123): warning C4715: “processor”: 不是所有的控件路径都返回值
   EasyServer.vcxproj -> D:\VisualStudio_program\百万并发服务器\HelloSocket\bin\x64\Debug\EasyTcpServer.exe

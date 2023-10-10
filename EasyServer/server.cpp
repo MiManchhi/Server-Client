@@ -13,7 +13,8 @@ enum CMD
 	CMD_LOGIN_RESULT,
 	CMD_LOGOUT,
 	CMD_LOGOUT_RESULT,
-	CMD_ERROR
+	CMD_ERROR,
+	CMD_NEW_CLIENT_JOIN
 };
 
 struct DataHeader 
@@ -65,6 +66,17 @@ struct LogoutResult : public DataHeader
 	int result;
 };
 
+struct NewClientJoin : public DataHeader
+{
+	NewClientJoin()
+	{
+		this->cmd = CMD_NEW_CLIENT_JOIN;
+		this->datalength = sizeof(NewClientJoin);
+		this->sock = 0;
+	}
+	int sock;
+};
+
 std::vector<SOCKET>g_clients;
 
 int processor(SOCKET _cSock)
@@ -75,7 +87,7 @@ int processor(SOCKET _cSock)
 	DataHeader* header = (DataHeader*)SZrecv;
 	if (nlen <= 0)
 	{
-		std::cout << "客户端已退出！" << std::endl;
+		std::cout << "客户端" << (int)_cSock << "已退出！" << std::endl;
 		return -1;
 	}
 	//处理请求
@@ -85,7 +97,7 @@ int processor(SOCKET _cSock)
 	{
 		recv(_cSock, SZrecv + sizeof(DataHeader), header->datalength - sizeof(DataHeader), 0);
 		Login* login = (Login*)SZrecv;
-		std::cout << "接收到信息：username = " << login->userName << "\t" << "userpassword = " << login->PassWord << "\t"
+		std::cout << "接收到客户端" << (int)_cSock << "的信息：username = " << login->userName << "\t" << "userpassword = " << login->PassWord << "\t"
 			<< "datalength = " << login->datalength << std::endl;
 		//忽略判断用户名和密码错误的过程
 		LoginResult ret;
@@ -96,7 +108,7 @@ int processor(SOCKET _cSock)
 	{
 		recv(_cSock, SZrecv + sizeof(DataHeader), header->datalength - sizeof(DataHeader), 0);
 		Logout* logout = (Logout*)SZrecv;
-		std::cout << "接收到信息：username = " << logout->userName << "\t"
+		std::cout << "接收到客户端"  << (int)_cSock << "的信息：username = " << logout->userName << "\t"
 			<< "datalength = " << logout->datalength << std::endl;
 		//忽略判断用户名和密码错误的过程
 		LogoutResult ret;
@@ -142,14 +154,17 @@ int main()
 	}
 	while (true)
 	{
-		fd_set fdRead;
+		//伯克利套接字
+		fd_set fdRead;//描述符（socket）集合
 		fd_set fdWrite;
 		fd_set fdExcep;
 
+		//清理集合
 		FD_ZERO(&fdRead);
 		FD_ZERO(&fdWrite);
 		FD_ZERO(&fdExcep);
 
+		//将socket加入集合
 		FD_SET(_sock, &fdRead);
 		FD_SET(_sock, &fdWrite);
 		FD_SET(_sock, &fdExcep);
@@ -159,11 +174,14 @@ int main()
 			FD_SET(g_clients[n], &fdRead);
 		}
 
-		int ret = select(_sock + 1, &fdRead, &fdWrite, &fdExcep, NULL);
+		timeval t = { 1,0 };
+		//设置时间变量timeval后select由阻塞变成非阻塞
+		int ret = select(_sock + 1, &fdRead, &fdWrite, &fdExcep, &t);
 		if (ret < 0)
 		{
 			std::cout << "select任务结束！" << std::endl;
 		}
+
 		if (FD_ISSET(_sock, &fdRead))
 		{
 			FD_CLR(_sock, &fdRead);
@@ -177,9 +195,16 @@ int main()
 				std::cout << "接受的无效的客户端连接!" << std::endl;
 			}
 			g_clients.push_back(_cSock);
+			//向客户端发送广播
+			for (size_t n = 0; n < g_clients.size(); n++)
+			{
+				NewClientJoin ncj;
+				send(g_clients[n], (const char*)&ncj, sizeof(NewClientJoin), 0);
+			}
 			std::cout << "接收的新的客户端IP:" << inet_ntoa(ClientAddr.sin_addr) << "\t"
 				<< "socket：" << (int)_cSock << std::endl;
 		}
+		//处理请求
 		for (size_t n = 0; n < fdRead.fd_count; n++)
 		{
 			if (processor(fdRead.fd_array[n]) == -1)
@@ -191,7 +216,9 @@ int main()
 				}
 			}
 		}
+		std::cout << "空闲处理其他业务" << std::endl;
 	}
+	//关闭socket
 	for (int n = 0; n < g_clients.size(); n++)
 	{
 		closesocket(g_clients[n]);

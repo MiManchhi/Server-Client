@@ -194,15 +194,18 @@ int main()
 			{
 				std::cout << "接受的无效的客户端连接!" << std::endl;
 			}
-			g_clients.push_back(_cSock);
-			//向客户端发送广播
-			for (size_t n = 0; n < g_clients.size(); n++)
+			else
 			{
-				NewClientJoin ncj;
-				send(g_clients[n], (const char*)&ncj, sizeof(NewClientJoin), 0);
+				g_clients.push_back(_cSock);
+				//向客户端发送广播
+				for (size_t n = 0; n < g_clients.size(); n++)
+				{
+					NewClientJoin ncj;
+					send(g_clients[n], (const char*)&ncj, sizeof(NewClientJoin), 0);
+				}
+				std::cout << "接收的新的客户端IP:" << inet_ntoa(ClientAddr.sin_addr) << "\t"
+					<< "socket：" << (int)_cSock << std::endl;
 			}
-			std::cout << "接收的新的客户端IP:" << inet_ntoa(ClientAddr.sin_addr) << "\t"
-				<< "socket：" << (int)_cSock << std::endl;
 		}
 		//处理请求
 		for (size_t n = 0; n < fdRead.fd_count; n++)

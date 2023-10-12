@@ -219,7 +219,7 @@ int main()
 				}
 			}
 		}
-		std::cout << "空闲处理其他业务" << std::endl;
+		//std::cout << "空闲处理其他业务" << std::endl;
 	}
 	//关闭socket
 	for (int n = 0; n < g_clients.size(); n++)

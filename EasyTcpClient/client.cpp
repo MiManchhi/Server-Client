@@ -1,7 +1,10 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+
 #include<WinSock2.h>
 #include<Windows.h>
 #include<iostream>
+#include<thread>
+
 #pragma comment (lib,"ws2_32.lib")
 
 enum CMD
@@ -115,6 +118,40 @@ int processor(SOCKET _cSock)
 	}
 }
 
+bool g_ThreadRun = true;
+void cmdthread(SOCKET _cSock)
+{
+	while (true)
+	{
+		char cmdBuf[256] = {};
+		//std::cout << "请输入请求：" << std::endl;
+		std::cin >> cmdBuf;
+		if (strcmp(cmdBuf, "exit") == 0)
+		{
+			g_ThreadRun = false;
+			std::cout << "任务结束，已退出！" << std::endl;
+			break;
+		}
+		if (strcmp(cmdBuf, "login") == 0)
+		{
+			Login login;
+			strcpy(login.userName, "张三");
+			strcpy(login.PassWord, "123456");
+			send(_cSock, (const char*)&login, sizeof(Login), 0);
+		}
+		if (strcmp(cmdBuf, "logout") == 0)
+		{
+			Logout logout;
+			strcpy(logout.userName, "张三");
+			send(_cSock, (const char*)&logout, sizeof(Logout), 0);
+		}
+		if (strcmp(cmdBuf, "login") != 0 && strcmp(cmdBuf, "logout") != 0)
+		{
+			std::cout << "不支持的命令！" << std::endl;
+		}
+	}
+}
+
 int main()
 {
 	//启动Socket
@@ -135,7 +172,7 @@ int main()
 	sockaddr_in _sin = {};
 	_sin.sin_family = AF_INET;
 	_sin.sin_port = htons(4567);
-	_sin.sin_addr.S_un.S_addr = inet_addr("10.180.56.219");
+	_sin.sin_addr.S_un.S_addr = inet_addr("10.180.58.102");
 	if (connect(_cSock, (sockaddr*)&_sin, sizeof(sockaddr_in)) == SOCKET_ERROR)
 	{
 		std::cout << "服务器连接失败！" << std::endl;
@@ -144,8 +181,11 @@ int main()
 	{
 		std::cout << "服务器连接成功!" << std::endl;
 	}
+	//启动线程
+	std::thread t1(cmdthread, _cSock);
+	t1.detach();
 	//发送请求
-	while (true)
+	while (g_ThreadRun)
 	{
 		fd_set fdRead;
 		FD_ZERO(&fdRead);
@@ -166,12 +206,7 @@ int main()
 				break;
 			}
 		}
-		std::cout << "空闲处理其他业务" << std::endl;
-		Login login;
-		strcpy(login.userName, "张三");
-		strcpy(login.PassWord, "123456");
-		send(_cSock, (const char*)&login, sizeof(Login), 0);
-		Sleep(1000);
+		//std::cout << "空闲处理其他业务" << std::endl;
 	}
 	//关闭套接字
 	closesocket(_cSock);
